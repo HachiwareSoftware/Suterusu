@@ -358,6 +358,7 @@ std::string SendToAPI(const std::string &prompt)
     {
         return "Error parsing response: " + std::string(e.what());
     }
+    std::cout << "[DEBUG] Full API response: " << responseString << std::endl;
     return "Error: Unexpected response format";
 }
 
