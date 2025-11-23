@@ -1,0 +1,7 @@
+{
+  "api_url": "http://localhost:8080/v1/chat/completions",
+  "api_key": "",
+  "model": "gpt-3.5-turbo",
+  "system_prompt": "You are a helpful assistant.",
+  "flash_window": "Chrome"
+}
