@@ -364,6 +364,7 @@ std::string SendToAPI(const std::string &prompt)
     }
     catch (const std::exception &e)
     {
+        std::cout << "[DEBUG] Full API response: " << responseString << std::endl;
         return "Error parsing response: " + std::string(e.what());
     }
     std::cout << "[DEBUG] Full API response: " << responseString << std::endl;
