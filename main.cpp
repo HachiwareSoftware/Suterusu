@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <mutex>
@@ -154,6 +155,16 @@ void FlashConfiguredWindows()
 // Load configuration from config.json
 bool LoadConfig()
 {
+    // Load system prompt from file or use default
+    std::ifstream promptFile("system_prompt.md");
+    if (promptFile.is_open()) {
+        std::stringstream buffer;
+        buffer << promptFile.rdbuf();
+        SYSTEM_PROMPT = buffer.str();
+    } else {
+        SYSTEM_PROMPT = "You are a helpful assistant.";
+    }
+
     std::ifstream configFile("config.json");
     if (!configFile.is_open())
     {
@@ -162,7 +173,6 @@ bool LoadConfig()
             {"api_url", "http://localhost:8080/v1/chat/completions"},
             {"api_key", ""},
             {"model", "gpt-3.5-turbo"},
-            {"system_prompt", "You are a helpful assistant."},
             {"flash_window", "Chrome"}};
 
         std::ofstream outFile("config.json");
@@ -174,7 +184,6 @@ bool LoadConfig()
         API_URL = defaultConfig["api_url"];
         API_KEY = defaultConfig["api_key"];
         MODEL = defaultConfig["model"];
-        SYSTEM_PROMPT = defaultConfig["system_prompt"];
         FLASH_WINDOW = defaultConfig["flash_window"];
         return true;
     }
@@ -186,7 +195,6 @@ bool LoadConfig()
         API_URL = config.value("api_url", "");
         MODEL = config.value("model", "");
         API_KEY = config.value("api_key", "");
-        SYSTEM_PROMPT = config.value("system_prompt", "You are a helpful assistant.");
         FLASH_WINDOW = config.value("flash_window", "Chrome");
 
         if (API_URL.empty() || MODEL.empty())
