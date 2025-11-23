@@ -22,6 +22,9 @@ std::atomic<bool> programRunning(true);
 std::thread apiThread;
 std::mutex threadMutex;
 
+json chatHistory = json::array();
+std::mutex historyMutex;
+
 std::string API_URL;
 std::string API_KEY;
 std::string MODEL;
@@ -318,6 +321,17 @@ std::string SendToAPI(const std::string &prompt)
     json messages = json::array();
     if (!SYSTEM_PROMPT.empty())
         messages.push_back({{"role", "system"}, {"content", SYSTEM_PROMPT}});
+
+    {
+        std::lock_guard<std::mutex> lock(historyMutex);
+        // Limit history to last 10 messages to avoid hitting token limits
+        size_t historySize = chatHistory.size();
+        size_t start = (historySize > 10) ? (historySize - 10) : 0;
+        
+        for (size_t i = start; i < historySize; ++i) {
+            messages.push_back(chatHistory[i]);
+        }
+    }
     messages.push_back({{"role", "user"}, {"content", prompt}});
 
     json payload = {{"model", MODEL}, {"messages", messages}, {"temperature", 0.7}};
@@ -355,7 +369,13 @@ std::string SendToAPI(const std::string &prompt)
         json responseJson = json::parse(responseString);
         if (responseJson.contains("choices") && !responseJson["choices"].empty())
         {
-            return responseJson["choices"][0]["message"]["content"];
+            std::string content = responseJson["choices"][0]["message"]["content"];
+            {
+                std::lock_guard<std::mutex> lock(historyMutex);
+                chatHistory.push_back({{"role", "user"}, {"content", prompt}});
+                chatHistory.push_back({{"role", "assistant"}, {"content", content}});
+            }
+            return content;
         }
         else if (responseJson.contains("error"))
         {
@@ -378,7 +398,13 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
     {
         KBDLLHOOKSTRUCT *pKeyboard = (KBDLLHOOKSTRUCT *)lParam;
 
-        if (pKeyboard->vkCode == VK_F7)
+        if (pKeyboard->vkCode == VK_F6)
+        {
+            std::lock_guard<std::mutex> lock(historyMutex);
+            chatHistory.clear();
+            std::cout << "Chat history cleared." << std::endl;
+        }
+        else if (pKeyboard->vkCode == VK_F7)
         {
             std::cout << "F7 pressed - Processing..." << std::endl;
             std::string clipboardText = GetClipboardText();
@@ -556,6 +582,7 @@ int main(int argc, char *argv[])
     std::cout << "  Flash Window: " << FLASH_WINDOW << std::endl;
     std::cout << std::endl;
     std::cout << "Controls:" << std::endl;
+    std::cout << "  F6 - Clear chat history" << std::endl;
     std::cout << "  F7 - Read clipboard and send to API" << std::endl;
     std::cout << "  F8 - Replace clipboard with API response" << std::endl;
     std::cout << "  F9 - Quit application" << std::endl;

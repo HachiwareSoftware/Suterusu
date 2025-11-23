@@ -10,7 +10,13 @@ Communicates with AI using your system clipboard (Windows only)
 
 ## Usage
 
-Read `config.json` for more information, to send content from clipboard use `F7`, to retrieve AI response to clipboard use `F8` and to exit the program use `F9`.
+Read `config.json` for more information.
+
+Keybinds:
++ F6: Clear the chat history
++ F7: Send the content from clipboard to AI
++ F8: Retrieve the response from AI to clipboard
++ F9: Close the application
 
 ## Installation
 
