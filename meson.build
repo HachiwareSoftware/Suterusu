@@ -35,3 +35,4 @@ executable('suterusu',
 
 # Install config example
 install_data('config.json', install_dir: meson.current_source_dir() + '/bin')
+install_data('system_prompt.md', install_dir: meson.current_source_dir() + '/bin')
