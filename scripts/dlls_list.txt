@@ -1,25 +1,39 @@
 System Informer 3.2.2103
 Windows NT 10.0 (64-bit)
-11:21:03 SA 26/11/2025
+2:41:59 PM 12/13/2025
 
 Name				Base address	Size	Description					
-WindowHider.exe			0x7ff746620000	424 kB							
-  ucrtbase.dll			0x7ffac0a30000	1,29 MB	Microsoft® C Runtime Library			
-  user32.dll			0x7ffac2f40000	1,78 MB	Multi-User Windows USER API Client DLL		
-    win32u.dll			0x7ffac1450000	156 kB	Win32u						
-    gdi32.dll			0x7ffac1f60000	172 kB	GDI Client DLL					
-      gdi32full.dll		0x7ffac11b0000	1,17 MB	GDI Client DLL					
-        msvcp_win.dll		0x7ffac0980000	652 kB	Microsoft® C Runtime Library			
-  libgcc_s_seh-1.dll		0x7ffa3b260000	172 kB							
-    libwinpthread-1.dll		0x7ffaa14c0000	84 kB	POSIX WinThreads for Windows			
-  libstdc++-6.dll		0x7ff9efe00000	2,36 MB							
-ntdll.dll			0x7ffac36e0000	2,41 MB	NT Layer DLL					
-kernel32.dll			0x7ffac2680000	804 kB	Windows NT BASE API Client DLL			
-  KernelBase.dll		0x7ffac0b80000	3,97 MB	Windows NT BASE API Client DLL			
-advapi32.dll			0x7ffac2550000	720 kB	Advanced Windows 32 Base API			
-  msvcrt.dll			0x7ffac1d50000	676 kB	Windows NT CRT DLL				
-  sechost.dll			0x7ffac2b00000	664 kB	Host for SCM/SDDL/LSA Lookup APIs		
-  rpcrt4.dll			0x7ffac1e00000	1,09 MB	Remote Procedure Call Runtime			
-  cryptbase.dll			0x7ffabfd50000	48 kB	Base cryptographic API DLL			
-    bcryptprimitives.dll	0x7ffac0f80000	660 kB	Windows Cryptographic Primitives Library	
-imm32.dll			0x7ffac2030000	196 kB	Multi-User Windows IMM32 API Client DLL		
+suterusu.exe			0x7ff74c2e0000	524 kB							
+  gdi32.dll			0x7ffb5e5d0000	168 kB	GDI Client DLL					
+    gdi32full.dll		0x7ffb5d2d0000	1.13 MB	GDI Client DLL					
+      msvcp_win.dll		0x7ffb5d400000	652 kB	Microsoft® C Runtime Library			
+        ucrtbase.dll		0x7ffb5cdd0000	1.29 MB	Microsoft® C Runtime Library			
+      user32.dll		0x7ffb5e3e0000	1.76 MB	Multi-User Windows USER API Client DLL		
+    win32u.dll			0x7ffb5d750000	156 kB	Win32u						
+  libbrowser_injector.dll	0x7ffb40890000	820 kB							
+    ws2_32.dll			0x7ffb5eee0000	464 kB	Windows Socket 2.0 32-Bit DLL			
+      rpcrt4.dll		0x7ffb5d970000	1.09 MB	Remote Procedure Call Runtime			
+  libcurl-4.dll			0x7ffb3a6b0000	880 kB							
+    advapi32.dll		0x7ffb5ecd0000	712 kB	Advanced Windows 32 Base API			
+      cryptbase.dll		0x7ffb5c580000	48 kB	Base cryptographic API DLL			
+        bcryptprimitives.dll	0x7ffb5d4b0000	612 kB	Windows Cryptographic Primitives Library	
+      msvcrt.dll		0x7ffb5f8d0000	676 kB	Windows NT CRT DLL				
+      sechost.dll		0x7ffb5e2e0000	668 kB	Host for SCM/SDDL/LSA Lookup APIs		
+    bcrypt.dll			0x7ffb5c730000	152 kB	Windows Cryptographic Primitives Library	
+    crypt32.dll			0x7ffb5d550000	1.46 MB	Crypto API32					
+    libssh2-1.dll		0x7ffb42bc0000	328 kB	libssh2 Shared Library				
+      libcrypto-3-x64.dll	0x7ffad25b0000	5.57 MB	OpenSSL library					
+    libzstd.dll			0x7ffb395b0000	1.16 MB							
+    normaliz.dll		0x7ffb5f1c0000	32 kB	Unicode Normalization DLL			
+    Wldap32.dll			0x7ffb5db70000	456 kB	Win32 LDAP API DLL				
+    zlib1.dll			0x7ffb55d50000	124 kB							
+  libgcc_s_seh-1.dll		0x7ffb43e50000	172 kB							
+    libwinpthread-1.dll		0x7ffb55f90000	84 kB	POSIX WinThreads for Windows			
+  libstdc++-6.dll		0x7ffae6530000	2.36 MB							
+imm32.dll			0x7ffb5d840000	188 kB	Multi-User Windows IMM32 API Client DLL		
+IPHLPAPI.DLL			0x7ffb5b7f0000	200 kB	IP Helper API					
+kernel32.dll			0x7ffb5ec00000	796 kB	Windows NT BASE API Client DLL			
+  KernelBase.dll		0x7ffb5cf20000	3.63 MB	Windows NT BASE API Client DLL			
+ntdll.dll			0x7ffb5f9c0000	2.39 MB	NT Layer DLL					
+secur32.dll			0x7ffb44b80000	52 kB	Security Support Provider Interface		
+  sspicli.dll			0x7ffb5bfa0000	288 kB	Security Support Provider Interface		

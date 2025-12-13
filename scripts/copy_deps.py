@@ -4,9 +4,14 @@ import platform
 import shutil
 from pathlib import Path
 
-# Kind of hardcoded here but okay.
+# Kind of hardcoded here but okay. (not okay though)
 msys2_path = Path(os.getenv("MSYS2_ROOT", "C:/msys64/ucrt64/bin/"))
 msys2_msys_path = Path(os.getenv("MSYS2_MSYS_ROOT", "C:/msys64/usr/bin/"))
+# Scoop installation fallback
+if not (msys2_path.exists() and msys2_msys_path.exists()):
+    userprofile = Path(os.getenv("USERPROFILE") or Path.home())
+    msys2_path = userprofile / "scoop" / "apps" / "msys2" / "current" / "ucrt64" / "bin"
+    msys2_msys_path = userprofile / "scoop" / "apps" / "msys2" / "current" / "usr" / "bin"
 source_path = Path(os.getenv("MESON_SOURCE_ROOT"))
 build_path = Path(os.getenv("MESON_BUILD_ROOT"))
 install_path = build_path.parent / "bin"
