@@ -15,7 +15,9 @@
 
 using json = nlohmann::json;
 
-// CDP injector DLL function
+// CDP injector DLL functions
+extern "C" __declspec(dllimport) bool InitializeCDP();
+extern "C" __declspec(dllimport) void ShutdownCDP();
 extern "C" __declspec(dllimport) bool InjectJavaScript(const char* filename);
 
 HHOOK hKeyboardHook;
@@ -735,6 +737,10 @@ int main(int argc, char *argv[])
     curl_global_init(CURL_GLOBAL_DEFAULT);
     InitializeCurl();
     
+    // Initialize CDP connection (optional - will auto-initialize on first use)
+    std::cout << "Initializing Chrome DevTools connection..." << std::endl;
+    InitializeCDP();
+    
     std::cout << "Waiting for key presses..." << std::endl;
     std::cout.flush();
     
@@ -769,6 +775,9 @@ int main(int argc, char *argv[])
     while (activeThreads > 0)
         Sleep(100);
     UnhookWindowsHookEx(hKeyboardHook);
+    
+    // Clean up CDP connection
+    ShutdownCDP();
     
     // Clean up persistent CURL handle
     if (persistentCurl)
