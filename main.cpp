@@ -737,9 +737,10 @@ int main(int argc, char *argv[])
     curl_global_init(CURL_GLOBAL_DEFAULT);
     InitializeCurl();
     
-    // Initialize CDP connection (optional - will auto-initialize on first use)
-    std::cout << "Initializing Chrome DevTools connection..." << std::endl;
+    // Initialize CDP connection (will auto-connect and reconnect in background thread)
+    std::cout << "Initializing Chrome DevTools connection (background)..." << std::endl;
     InitializeCDP();
+    std::cout << "CDP will automatically connect when browser is available..." << std::endl;
     
     std::cout << "Waiting for key presses..." << std::endl;
     std::cout.flush();

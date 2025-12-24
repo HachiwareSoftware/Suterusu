@@ -11,6 +11,8 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#include <thread>
+#include <chrono>
 
 using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
@@ -24,13 +26,82 @@ private:
     std::unique_ptr<websocket::stream<tcp::socket>> ws;
     std::mutex ws_mutex;
     std::atomic<bool> connected{false};
+    std::atomic<bool> should_reconnect{true};
     std::atomic<int> message_id{1};
     std::string ws_url;
+    std::thread reconnect_thread;
+    std::atomic<bool> reconnect_thread_running{false};
+    
+    void ReconnectThreadFunc() {
+        reconnect_thread_running = true;
+        const int RETRY_INTERVAL_MS = 1000; // Retry every 1 second
+        const int HEARTBEAT_INTERVAL_MS = 500; // Check connection health every 5 seconds
+        auto last_heartbeat = std::chrono::steady_clock::now();
+        
+        while (should_reconnect) {
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_heartbeat).count();
+            
+            {
+                std::lock_guard<std::mutex> lock(ws_mutex);
+                
+                if (!connected) {
+                    std::cout << "[CDP] Attempting to connect to browser...\n";
+                    if (EstablishConnection()) {
+                        std::cout << "[CDP] Successfully connected to browser\n";
+                        last_heartbeat = std::chrono::steady_clock::now();
+                    }
+                } else if (elapsed >= HEARTBEAT_INTERVAL_MS) {
+                    // Perform periodic health check
+                    if (!HealthCheck()) {
+                        std::cout << "[CDP] Connection lost, will reconnect...\n";
+                        connected = false;
+                    }
+                    last_heartbeat = std::chrono::steady_clock::now();
+                }
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_INTERVAL_MS));
+        }
+        reconnect_thread_running = false;
+    }
+    
+    bool HealthCheck() {
+        // Check if socket is still open
+        try {
+            if (!ws || !ws->next_layer().is_open()) {
+                return false;
+            }
+            // Try to send a simple command to verify connection is alive
+            json ping_msg = {
+                {"id", message_id++},
+                {"method", "Browser.getVersion"},
+                {"params", json::object()}
+            };
+            
+            std::string ping_text = ping_msg.dump();
+            ws->write(boost::asio::buffer(ping_text));
+            
+            boost::beast::flat_buffer response_buffer;
+            ws->read(response_buffer);
+            
+            return true;
+        } catch (...) {
+            return false;
+        }
+    }
     
     bool EstablishConnection() {
         try {
             const char *host = "127.0.0.1";
             const char *port = "27245";
+            
+            // Safely close old connection before creating new io_context
+            if (ws) {
+                try {
+                    ws->close(websocket::close_code::normal);
+                } catch (...) {}
+                ws.reset();
+            }
             
             // Reset io_context and websocket
             ioc = std::make_unique<boost::asio::io_context>();
@@ -55,7 +126,7 @@ private:
             // Parse JSON to find WebSocket URL
             auto j = json::parse(res.body());
             if (!j.is_array() || j.empty()) {
-                std::cerr << "No targets found\n";
+                std::cerr << "[CDP] No targets found\n";
                 return false;
             }
             
@@ -69,7 +140,7 @@ private:
             }
             
             if (ws_url.empty()) {
-                std::cerr << "No page target with webSocketDebuggerUrl\n";
+                std::cerr << "[CDP] No page target with webSocketDebuggerUrl\n";
                 return false;
             }
             
@@ -153,8 +224,12 @@ public:
         }
         
         // Reconnect if needed
-        std::cout << "[CDP] Establishing new connection...\n";
+        std::cout << "[CDP] Ensuring connection...\n";
         return EstablishConnection();
+    }
+    
+    bool IsConnected() const {
+        return connected;
     }
     
     bool SendCommand(const std::string& method, const json& params, std::string& response) {
@@ -166,6 +241,13 @@ public:
         }
         
         try {
+            // Verify socket is still open before sending
+            if (!ws->next_layer().is_open()) {
+                std::cerr << "[CDP] Socket is closed\n";
+                connected = false;
+                return false;
+            }
+            
             json msg = {
                 {"id", message_id++},
                 {"method", method},
@@ -185,25 +267,55 @@ public:
         } catch (std::exception const &e) {
             std::cerr << "[CDP] Send error: " << e.what() << "\n";
             connected = false;
+            // Try to close the socket gracefully
+            try {
+                if (ws && ws->next_layer().is_open()) {
+                    ws->next_layer().close();
+                }
+            } catch (...) {}
             return false;
+        }
+    }
+    
+    void StartAutoReconnect() {
+        std::lock_guard<std::mutex> lock(ws_mutex);
+        
+        if (reconnect_thread_running) {
+            return; // Already running
+        }
+        
+        should_reconnect = true;
+        reconnect_thread = std::thread(&CDPConnection::ReconnectThreadFunc, this);
+        // Don't detach - let destructor handle cleanup
+    }
+    
+    void StopAutoReconnect() {
+        should_reconnect = false;
+        // Wait for thread to finish gracefully
+        if (reconnect_thread.joinable()) {
+            reconnect_thread.join();
         }
     }
     
     void Disconnect() {
         std::lock_guard<std::mutex> lock(ws_mutex);
         
-        if (ws && connected) {
+        if (ws) {
             try {
-                ws->close(websocket::close_code::normal);
+                if (ws->next_layer().is_open()) {
+                    ws->close(websocket::close_code::normal);
+                    ws->next_layer().close();
+                }
             } catch (...) {}
+            ws.reset();
         }
         
-        ws.reset();
         connected = false;
         std::cout << "[CDP] Connection closed\n";
     }
     
     ~CDPConnection() {
+        StopAutoReconnect();
         Disconnect();
     }
 };
@@ -220,7 +332,10 @@ extern "C" __declspec(dllexport) bool InitializeCDP() {
         g_cdp_connection = std::make_unique<CDPConnection>();
     }
     
-    return g_cdp_connection->EnsureConnected();
+    // Start auto-reconnect thread
+    g_cdp_connection->StartAutoReconnect();
+    
+    return true;
 }
 
 extern "C" __declspec(dllexport) void ShutdownCDP() {
@@ -241,8 +356,19 @@ extern "C" __declspec(dllexport) bool InjectJavaScript(const char* filename)
         g_cdp_connection = std::make_unique<CDPConnection>();
     }
     
-    if (!g_cdp_connection->EnsureConnected()) {
-        std::cerr << "[CDP] Failed to establish connection\n";
+    // Wait up to 10 seconds for connection with retries
+    for (int i = 0; i < 50; ++i) {
+        if (g_cdp_connection->IsConnected()) {
+            break;
+        }
+        if (i == 0) {
+            std::cout << "[CDP] Waiting for browser connection...\n";
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+    
+    if (!g_cdp_connection->IsConnected()) {
+        std::cerr << "[CDP] Failed to establish connection to browser\n";
         return false;
     }
     
